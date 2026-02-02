@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,8 +21,10 @@ public class BookController {
 
     private final BookService service;
 
-    // Endpoint for ADMIN to add a book with an image
+
+    // Admin - Endpoint to add a book with an image
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BookDetailsResponse> addBook(
             @RequestParam("title") String title,
             @RequestParam("author") String author,
