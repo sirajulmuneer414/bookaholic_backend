@@ -21,7 +21,7 @@ public class EmailService {
 
     public void sendPasswordResetEmail(String toEmail, String resetToken) {
         try {
-            String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+            String resetLink = "https://bookaholic-frontend.vercel.app/reset-password?token=" + resetToken;
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

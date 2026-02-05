@@ -66,6 +66,7 @@ jobs:
             -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
             -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
             -e GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }} \
+            --restart on-failure:5 \
              ${{ secrets.DOCKERHUB_USERNAME }}/bookaholic-backend:latest
           
           # Prune old images to save space
