@@ -32,5 +32,5 @@ build/
 ### VS Code ###
 .vscode/
 
-### Ignore application.properties files which may contain sensitive data ###
-**/src/main/resources/application.properties
+# application.properties is now parameterized and safe to commit
+# **/src/main/resources/application.properties
