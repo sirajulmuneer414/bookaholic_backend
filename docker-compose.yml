@@ -20,7 +20,7 @@ services:
     ports:
       - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: P@ssw0rd_Bo0k@h0l!c_2026_SecuR3
       MYSQL_DATABASE: library_db
     volumes:
       - db_data:/var/lib/mysql
