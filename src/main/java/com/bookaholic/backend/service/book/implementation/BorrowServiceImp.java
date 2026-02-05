@@ -105,7 +105,7 @@ public class BorrowServiceImp implements BorrowService {
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
 
-        BorrowRecord returnedBookRecord =  borrowRepository.save(recordToReturn);
+        BorrowRecord returnedBookRecord = borrowRepository.save(recordToReturn);
 
         return mapToResponseDTO(returnedBookRecord);
     }
@@ -124,14 +124,30 @@ public class BorrowServiceImp implements BorrowService {
         BorrowRecord recordToOverride = borrowRepository.findById(recordId)
                 .orElseThrow(() -> new RuntimeException("Record not found"));
 
+        BorrowStatus oldStatus = recordToOverride.getStatus();
+
+        // Only update book inventory if status actually changes
+        if (oldStatus != status) {
+            Book book = recordToOverride.getBook();
+
+            // BORROWED → RETURNED: Book is being returned, increase available copies
+            if (oldStatus == BorrowStatus.BORROWED && status == BorrowStatus.RETURNED) {
+                book.setAvailableCopies(book.getAvailableCopies() + 1);
+                recordToOverride.setReturnDate(LocalDate.now());
+            }
+            // RETURNED → BORROWED: Book is being re-borrowed, decrease available copies
+            else if (oldStatus == BorrowStatus.RETURNED && status == BorrowStatus.BORROWED) {
+                if (book.getAvailableCopies() <= 0) {
+                    throw new RuntimeException("Cannot change status to BORROWED: No available copies");
+                }
+                book.setAvailableCopies(book.getAvailableCopies() - 1);
+                recordToOverride.setReturnDate(null); // Clear return date when re-borrowing
+            }
+
+            bookRepository.save(book);
+        }
+
         recordToOverride.setStatus(status);
-
-        Book book = recordToOverride.getBook();
-        book.setAvailableCopies(book.getAvailableCopies() + 1);
-        bookRepository.save(book);
-
-
-
         BorrowRecord modRecord = borrowRepository.save(recordToOverride);
 
         return mapToResponseDTO(modRecord);
@@ -161,10 +177,10 @@ public class BorrowServiceImp implements BorrowService {
         return borrowRepository.findAll().stream().map(this::mapToResponseDTO).toList();
     }
 
+    // --------------------------------------- HELPER METHODS
+    // -------------------------------------------------------------
 
-    // --------------------------------------- HELPER METHODS -------------------------------------------------------------
-
-    private BorrowRecordResponseDTO mapToResponseDTO(BorrowRecord recordToMap){
+    private BorrowRecordResponseDTO mapToResponseDTO(BorrowRecord recordToMap) {
         return BorrowRecordResponseDTO.builder()
                 .id(recordToMap.getId())
                 .userId(recordToMap.getUser().getId())
@@ -172,6 +188,7 @@ public class BorrowServiceImp implements BorrowService {
                 .bookId(recordToMap.getBook().getId())
                 .bookTitle(recordToMap.getBook().getTitle())
                 .borrowDate(recordToMap.getBorrowDate())
+                .returnDate(recordToMap.getReturnDate()) // ✅ Added missing returnDate
                 .dueDate(recordToMap.getDueDate())
                 .status(recordToMap.getStatus())
                 .build();

@@ -10,4 +10,13 @@ public interface AuthService {
     AuthenticationResponse authenticate(AuthenticationRequest request);
 
     AuthenticationResponse authenticateGoogle(String idTokenString);
+
+    // Password Reset
+    void processForgotPassword(String email);
+
+    void resetPassword(String token, String newPassword);
+
+    // OTP Verification
+    void verifyOtp(String email, String otp);
+    void resendOtp(String email);
 }

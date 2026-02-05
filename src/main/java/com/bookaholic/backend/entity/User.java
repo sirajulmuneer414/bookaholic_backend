@@ -41,6 +41,16 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private AuthProvider authProvider; // LOCAL or GOOGLE
 
+    // Password Reset Fields
+    private String resetPasswordToken;
+    private java.time.LocalDateTime resetTokenExpiry;
+
+    // OTP and Email Verification Fields
+    private String otpCode;
+    private java.time.LocalDateTime otpExpiry;
+    @lombok.Builder.Default
+    private boolean isVerified = false;
+
     // Security Details
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -53,12 +63,22 @@ public class User implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-    @Override
-    public boolean isEnabled() { return true; }
-}
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+}

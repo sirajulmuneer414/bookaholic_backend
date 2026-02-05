@@ -7,11 +7,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-    // Book service interface
+// Book service interface
 
 public interface BookService {
     @Transactional
-    BookDetailsResponse addBook(String title, String author, String isbn, Integer copies, MultipartFile imageFile) throws IOException, IOException;
+    BookDetailsResponse addBook(String title, String author, String isbn, Integer copies, MultipartFile imageFile)
+            throws IOException, IOException;
+
+    @Transactional
+    BookDetailsResponse updateBook(Long id, String title, String author, String isbn, Integer totalCopies,
+            MultipartFile imageFile) throws IOException;
 
     List<BookDetailsResponse> getAllBooks();
 

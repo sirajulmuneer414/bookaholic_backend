@@ -21,7 +21,6 @@ public class BookController {
 
     private final BookService service;
 
-
     // Admin - Endpoint to add a book with an image
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
@@ -30,11 +29,24 @@ public class BookController {
             @RequestParam("author") String author,
             @RequestParam("isbn") String isbn,
             @RequestParam("copies") Integer copies,
-            @RequestParam("image") MultipartFile image
-    ) throws IOException {
+            @RequestParam("image") MultipartFile image) throws IOException {
 
         log.info("Adding book with title: {}, author: {}, isbn: {}", title, author, isbn);
         return ResponseEntity.ok(service.addBook(title, author, isbn, copies, image));
+    }
+
+    // Admin - Endpoint to update a book (image is optional)
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BookDetailsResponse> updateBook(
+            @PathVariable Long id,
+            @RequestParam("title") String title,
+            @RequestParam("author") String author,
+            @RequestParam("isbn") String isbn,
+            @RequestParam("totalCopies") Integer totalCopies,
+            @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
+        log.info("Updating book with id: {}, title: {}", id, title);
+        return ResponseEntity.ok(service.updateBook(id, title, author, isbn, totalCopies, image));
     }
 
     // Public/User endpoint to view all books
@@ -47,7 +59,7 @@ public class BookController {
     // Public/User endpoint to view a book by ID
     @GetMapping("/{id}")
     public ResponseEntity<BookDetailsResponse> getBookById(@PathVariable Long id) {
-       log.info("Getting book with id: {}", id);
+        log.info("Getting book with id: {}", id);
         return ResponseEntity.ok(service.getBookById(id));
     }
 

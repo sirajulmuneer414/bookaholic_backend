@@ -34,6 +34,7 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
+
         return generateToken(new HashMap<>(), userDetails);
     }
 
