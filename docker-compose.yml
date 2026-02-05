@@ -16,6 +16,7 @@ services:
 
   db:
     image: mysql:8.0
+    container_name: bookaholic-db
     ports:
       - "3307:3306"
     environment:
@@ -28,6 +29,7 @@ services:
 
 networks:
   app-network:
+    name: app-network
     driver: bridge
 
 volumes:

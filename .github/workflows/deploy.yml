@@ -52,6 +52,10 @@ jobs:
           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/bookaholic-backend:latest
           docker stop bookaholic-backend || true
           docker rm bookaholic-backend || true
+          
+          # Ensure network exists
+          docker network create app-network || true
+
           docker run -d --name bookaholic-backend \
             -p 8081:8081 \
             --network app-network \
