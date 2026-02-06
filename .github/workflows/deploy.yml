@@ -76,4 +76,4 @@ jobs:
              ${{ secrets.DOCKERHUB_USERNAME }}/bookaholic-backend:latest
           
           # Prune old images to save space
-          docker image prune -a -f
+          docker image prune -f
