@@ -74,6 +74,3 @@ jobs:
             -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
             --restart on-failure:5 \
              ${{ secrets.DOCKERHUB_USERNAME }}/bookaholic-backend:latest
-          
-          # Prune old images to save space
-          docker image prune -f
