@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   backend:
+    image: sirajulmuneer007001/bookaholic-backend:latest
     build: .
     ports:
       - "8081:8081"
