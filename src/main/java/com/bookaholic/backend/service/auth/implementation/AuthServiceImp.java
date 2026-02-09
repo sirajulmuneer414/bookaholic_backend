@@ -71,7 +71,7 @@ public class AuthServiceImp implements AuthService {
 
         // 3. Create user with isVerified=false
         var user = User.builder()
-                .fullName(request.getLastname() + " " + request.getFirstname())
+                .fullName(request.getFirstname() + " " + request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
