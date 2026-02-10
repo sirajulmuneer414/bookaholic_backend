@@ -1,6 +1,7 @@
 package com.bookaholic.backend.service.user.implementation;
 
 import com.bookaholic.backend.DTO.books.BorrowRecordResponseDTO;
+import com.bookaholic.backend.DTO.common.PagedResponse;
 import com.bookaholic.backend.DTO.users.BorrowRecordUpdateDTO;
 import com.bookaholic.backend.DTO.users.UserResponseDTO;
 import com.bookaholic.backend.DTO.users.UserUpdateDTO;
@@ -8,6 +9,7 @@ import com.bookaholic.backend.entity.Book;
 import com.bookaholic.backend.entity.BorrowRecord;
 import com.bookaholic.backend.entity.User;
 import com.bookaholic.backend.entity.enums.BorrowStatus;
+import com.bookaholic.backend.entity.enums.Role;
 import com.bookaholic.backend.repository.BookRepository;
 import com.bookaholic.backend.repository.BorrowRecordRepository;
 import com.bookaholic.backend.repository.UserRepository;
@@ -15,6 +17,9 @@ import com.bookaholic.backend.service.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +48,75 @@ public class UserServiceImp implements UserService {
         return userRepository.findAll().stream()
                 .map(this::mapToUserResponseDTO)
                 .toList();
+    }
+
+    /**
+     * Get all users - Paginated
+     *
+     * @param page Page number (0-indexed)
+     * @param size Number of records per page
+     * @return PagedResponse with user details and pagination metadata
+     */
+    @Override
+    public PagedResponse<UserResponseDTO> getAllUsers(int page, int size) {
+        log.info("Fetching all users - page: {}, size: {}", page, size);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> userPage = userRepository.findAll(pageable);
+
+        List<UserResponseDTO> content = userPage.getContent().stream()
+                .map(this::mapToUserResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                userPage.getNumber(),
+                userPage.getSize(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                userPage.hasNext(),
+                userPage.hasPrevious(),
+                userPage.isFirst(),
+                userPage.isLast());
+    }
+
+    /**
+     * Get all users filtered by role - Paginated
+     *
+     * @param page Page number (0-indexed)
+     * @param size Number of records per page
+     * @param role Filter by user role (USER or ADMIN)
+     * @return PagedResponse with filtered user details and pagination metadata
+     */
+    @Override
+    public PagedResponse<UserResponseDTO> getAllUsers(int page, int size, Role role) {
+        log.info("Fetching users by role: {} - page: {}, size: {}", role, page, size);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> userPage = userRepository.findByRole(role, pageable);
+
+        List<UserResponseDTO> content = userPage.getContent().stream()
+                .map(this::mapToUserResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                userPage.getNumber(),
+                userPage.getSize(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                userPage.hasNext(),
+                userPage.hasPrevious(),
+                userPage.isFirst(),
+                userPage.isLast());
+    }
+
+    /**
+     * Get total count of all users
+     *
+     * @return Total count of all users
+     */
+    @Override
+    public long getTotalUserCount() {
+        return userRepository.count();
     }
 
     /**
@@ -103,9 +177,45 @@ public class UserServiceImp implements UserService {
             throw new EntityNotFoundException("User not found with id: " + userId);
         }
 
-        return borrowRecordRepository.findByUserId(userId).stream()
+        // For unpaginated version, we need to pass a Pageable.unpaged()
+        return borrowRecordRepository.findByUserId(userId, Pageable.unpaged()).stream()
                 .map(this::mapToBorrowRecordResponseDTO)
                 .toList();
+    }
+
+    /**
+     * Get user's borrow records - Paginated
+     *
+     * @param userId User ID
+     * @param page   Page number (0-indexed)
+     * @param size   Number of records per page
+     * @return PagedResponse with borrow record details and pagination metadata
+     */
+    @Override
+    public PagedResponse<BorrowRecordResponseDTO> getUserBorrowRecords(Long userId, int page, int size) {
+        log.info("Fetching borrow records for user id: {} - page: {}, size: {}", userId, page, size);
+        // Verify user exists
+        if (!userRepository.existsById(userId)) {
+            throw new EntityNotFoundException("User not found with id: " + userId);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BorrowRecord> recordPage = borrowRecordRepository.findByUserId(userId, pageable);
+
+        List<BorrowRecordResponseDTO> content = recordPage.getContent().stream()
+                .map(this::mapToBorrowRecordResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                recordPage.getNumber(),
+                recordPage.getSize(),
+                recordPage.getTotalElements(),
+                recordPage.getTotalPages(),
+                recordPage.hasNext(),
+                recordPage.hasPrevious(),
+                recordPage.isFirst(),
+                recordPage.isLast());
     }
 
     /**

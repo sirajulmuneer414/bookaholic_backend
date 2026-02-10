@@ -1,6 +1,7 @@
 package com.bookaholic.backend.service.book.implementation;
 
 import com.bookaholic.backend.DTO.books.BorrowRecordResponseDTO;
+import com.bookaholic.backend.DTO.common.PagedResponse;
 import com.bookaholic.backend.entity.Book;
 import com.bookaholic.backend.entity.BorrowRecord;
 import com.bookaholic.backend.entity.User;
@@ -11,6 +12,9 @@ import com.bookaholic.backend.repository.UserRepository;
 import com.bookaholic.backend.service.book.BorrowService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -162,9 +166,72 @@ public class BorrowServiceImp implements BorrowService {
     public List<BorrowRecordResponseDTO> getMyRecords() {
         String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         User user = userRepository.findByEmail(email).orElseThrow();
-        List<BorrowRecord> recordList = borrowRepository.findByUserId(user.getId());
+        List<BorrowRecord> recordList = borrowRepository.findByUserId(user.getId(), Pageable.unpaged()).getContent();
 
         return recordList.stream().map(this::mapToResponseDTO).toList();
+    }
+
+    /**
+     * Get My Records Operation - Paginated
+     *
+     * @param page Page number (0-indexed)
+     * @param size Number of records per page
+     * @return PagedResponse with borrow records for current user
+     */
+    @Override
+    public PagedResponse<BorrowRecordResponseDTO> getMyRecords(int page, int size) {
+        String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BorrowRecord> recordPage = borrowRepository.findByUserId(user.getId(), pageable);
+
+        List<BorrowRecordResponseDTO> content = recordPage.getContent().stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                recordPage.getNumber(),
+                recordPage.getSize(),
+                recordPage.getTotalElements(),
+                recordPage.getTotalPages(),
+                recordPage.hasNext(),
+                recordPage.hasPrevious(),
+                recordPage.isFirst(),
+                recordPage.isLast());
+    }
+
+    /**
+     * Get My Records Operation Filtered by Status - Paginated
+     *
+     * @param page   Page number (0-indexed)
+     * @param size   Number of records per page
+     * @param status Filter by borrow status (BORROWED or RETURNED)
+     * @return PagedResponse with filtered borrow records for current user
+     */
+    @Override
+    public PagedResponse<BorrowRecordResponseDTO> getMyRecords(int page, int size, BorrowStatus status) {
+        String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BorrowRecord> recordPage = borrowRepository.findByUserIdAndStatus(user.getId(), status, pageable);
+
+        List<BorrowRecordResponseDTO> content = recordPage.getContent().stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                recordPage.getNumber(),
+                recordPage.getSize(),
+                recordPage.getTotalElements(),
+                recordPage.getTotalPages(),
+                recordPage.hasNext(),
+                recordPage.hasPrevious(),
+                recordPage.isFirst(),
+                recordPage.isLast());
     }
 
     /**
@@ -175,6 +242,73 @@ public class BorrowServiceImp implements BorrowService {
     @Override
     public List<BorrowRecordResponseDTO> getAllRecords() {
         return borrowRepository.findAll().stream().map(this::mapToResponseDTO).toList();
+    }
+
+    /**
+     * Get All Records Operation - Paginated
+     *
+     * @param page Page number (0-indexed)
+     * @param size Number of records per page
+     * @return PagedResponse with all borrow records
+     */
+    @Override
+    public PagedResponse<BorrowRecordResponseDTO> getAllRecords(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BorrowRecord> recordPage = borrowRepository.findAll(pageable);
+
+        List<BorrowRecordResponseDTO> content = recordPage.getContent().stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                recordPage.getNumber(),
+                recordPage.getSize(),
+                recordPage.getTotalElements(),
+                recordPage.getTotalPages(),
+                recordPage.hasNext(),
+                recordPage.hasPrevious(),
+                recordPage.isFirst(),
+                recordPage.isLast());
+    }
+
+    /**
+     * Get All Records Filtered by Status - Paginated (for Admin)
+     *
+     * @param page   Page number (0-indexed)
+     * @param size   Number of records per page
+     * @param status Filter by borrow status (BORROWED or RETURNED)
+     * @return PagedResponse with filtered borrow records
+     */
+    @Override
+    public PagedResponse<BorrowRecordResponseDTO> getAllRecords(int page, int size, BorrowStatus status) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<BorrowRecord> recordPage = borrowRepository.findByStatus(status, pageable);
+
+        List<BorrowRecordResponseDTO> content = recordPage.getContent().stream()
+                .map(this::mapToResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                recordPage.getNumber(),
+                recordPage.getSize(),
+                recordPage.getTotalElements(),
+                recordPage.getTotalPages(),
+                recordPage.hasNext(),
+                recordPage.hasPrevious(),
+                recordPage.isFirst(),
+                recordPage.isLast());
+    }
+
+    /**
+     * Get Total Record Count (for Admin header display)
+     *
+     * @return Total count of all borrow records
+     */
+    @Override
+    public long getTotalRecordCount() {
+        return borrowRepository.count();
     }
 
     // --------------------------------------- HELPER METHODS

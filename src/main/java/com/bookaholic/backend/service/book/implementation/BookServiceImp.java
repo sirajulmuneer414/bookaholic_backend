@@ -1,6 +1,7 @@
 package com.bookaholic.backend.service.book.implementation;
 
 import com.bookaholic.backend.DTO.books.BookDetailsResponse;
+import com.bookaholic.backend.DTO.common.PagedResponse;
 import com.bookaholic.backend.entity.Book;
 import com.bookaholic.backend.repository.BookRepository;
 import com.bookaholic.backend.service.book.BookService;
@@ -8,6 +9,9 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -88,6 +92,42 @@ public class BookServiceImp implements BookService {
                                 .availableCopies(book.getAvailableCopies())
                                 .imageUrl(book.getImageUrl())
                                 .build()).toList();
+        }
+
+        /**
+         * Get all books from the library - Paginated
+         *
+         * @param page Page number (0-indexed)
+         * @param size Number of records per page
+         * @return PagedResponse with book details and pagination metadata
+         */
+        @Override
+        public PagedResponse<BookDetailsResponse> getAllBooks(int page, int size) {
+                Pageable pageable = PageRequest.of(page, size);
+                Page<Book> bookPage = repository.findAll(pageable);
+
+                List<BookDetailsResponse> content = bookPage.getContent().stream()
+                                .map(book -> BookDetailsResponse.builder()
+                                                .id(book.getId())
+                                                .title(book.getTitle())
+                                                .author(book.getAuthor())
+                                                .isbn(book.getIsbn())
+                                                .totalCopies(book.getTotalCopies())
+                                                .availableCopies(book.getAvailableCopies())
+                                                .imageUrl(book.getImageUrl())
+                                                .build())
+                                .toList();
+
+                return new PagedResponse<>(
+                                content,
+                                bookPage.getNumber(),
+                                bookPage.getSize(),
+                                bookPage.getTotalElements(),
+                                bookPage.getTotalPages(),
+                                bookPage.hasNext(),
+                                bookPage.hasPrevious(),
+                                bookPage.isFirst(),
+                                bookPage.isLast());
         }
 
         /**

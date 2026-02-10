@@ -1,6 +1,7 @@
 package com.bookaholic.backend.controller.book;
 
 import com.bookaholic.backend.DTO.books.BookDetailsResponse;
+import com.bookaholic.backend.DTO.common.PagedResponse;
 import com.bookaholic.backend.service.book.BookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,10 +52,19 @@ public class BookController {
         return ResponseEntity.ok(service.updateBook(id, title, author, isbn, totalCopies, image));
     }
 
-    // Public/User endpoint to view all books
+    // Public/User endpoint to view all books - Paginated
     @GetMapping
-    public ResponseEntity<List<BookDetailsResponse>> getAllBooks() {
-        log.info("Getting all books");
+    public ResponseEntity<PagedResponse<BookDetailsResponse>> getAllBooks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("Getting all books - page: {}, size: {}", page, size);
+        return ResponseEntity.ok(service.getAllBooks(page, size));
+    }
+
+    // Unpaginated - for dashboard stats
+    @GetMapping("/all")
+    public ResponseEntity<List<BookDetailsResponse>> getAllBooksUnpaginated() {
+        log.info("Getting all books (unpaginated) for stats");
         return ResponseEntity.ok(service.getAllBooks());
     }
 

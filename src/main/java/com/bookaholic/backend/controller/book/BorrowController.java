@@ -1,6 +1,7 @@
 package com.bookaholic.backend.controller.book;
 
 import com.bookaholic.backend.DTO.books.BorrowRecordResponseDTO;
+import com.bookaholic.backend.DTO.common.PagedResponse;
 import com.bookaholic.backend.entity.enums.BorrowStatus;
 import com.bookaholic.backend.service.book.BorrowService;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-    // Borrow controller class
+// Borrow controller class
 
 @RestController
 @RequestMapping("/api/borrow")
@@ -37,19 +38,49 @@ public class BorrowController {
         return ResponseEntity.ok(service.returnBook(recordId));
     }
 
-    // USER: See their history
+    // USER: See their history - Paginated
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my-history")
-    public ResponseEntity<List<BorrowRecordResponseDTO>> getMyHistory() {
-        log.info("Fetching user's borrowing history");
+    public ResponseEntity<PagedResponse<BorrowRecordResponseDTO>> getMyHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) BorrowStatus status) {
+        log.info("Fetching user's borrowing history - page: {}, size: {}, status: {}", page, size, status);
+        if (status != null) {
+            return ResponseEntity.ok(service.getMyRecords(page, size, status));
+        } else {
+            return ResponseEntity.ok(service.getMyRecords(page, size));
+        }
+    }
+
+    // USER: See their history - Unpaginated (for dashboard stats)
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/my-history/all")
+    public ResponseEntity<List<BorrowRecordResponseDTO>> getMyHistoryAll() {
+        log.info("Fetching user's full borrowing history (unpaginated)");
         return ResponseEntity.ok(service.getMyRecords());
     }
 
-    // ADMIN: See ALL history
+    // ADMIN: See ALL history - Paginated
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
-    public ResponseEntity<List<BorrowRecordResponseDTO>> getAllHistory() {
-        log.info("Fetching all borrowing history");
+    public ResponseEntity<PagedResponse<BorrowRecordResponseDTO>> getAllHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) BorrowStatus status) {
+        log.info("Fetching all borrowing history - page: {}, size: {}, status: {}", page, size, status);
+        if (status != null) {
+            return ResponseEntity.ok(service.getAllRecords(page, size, status));
+        } else {
+            return ResponseEntity.ok(service.getAllRecords(page, size));
+        }
+    }
+
+    // ADMIN: See ALL history - Unpaginated (for dashboard stats)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all/records")
+    public ResponseEntity<List<BorrowRecordResponseDTO>> getAllHistoryUnpaginated() {
+        log.info("Fetching all borrowing history (unpaginated)");
         return ResponseEntity.ok(service.getAllRecords());
     }
 
@@ -58,9 +89,16 @@ public class BorrowController {
     @PutMapping("/admin/override/{recordId}")
     public ResponseEntity<BorrowRecordResponseDTO> overrideStatus(
             @PathVariable Long recordId,
-            @RequestParam BorrowStatus status
-    ) {
+            @RequestParam BorrowStatus status) {
         log.info("Admin overriding status for record id: {} to status: {}", recordId, status);
         return ResponseEntity.ok(service.adminOverrideStatus(recordId, status));
+    }
+
+    // ADMIN: Get total record count
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/count")
+    public ResponseEntity<Long> getTotalRecordCount() {
+        log.info("Fetching total borrow record count");
+        return ResponseEntity.ok(service.getTotalRecordCount());
     }
 }
